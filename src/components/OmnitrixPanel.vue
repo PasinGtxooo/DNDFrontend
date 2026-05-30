@@ -16,8 +16,17 @@ const activeAlien = computed(() =>
   p.value?.active_alien ? store.aliens[p.value.active_alien] : null
 )
 
+function playSound(src) {
+  try {
+    const audio = new Audio(src)
+    audio.volume = 0.8
+    audio.play().catch(() => {})
+  } catch {}
+}
+
 async function doTransform() {
   if (!selected.value) return toast('Select an alien first', 'error')
+  playSound('/MP3/Transform.mp3')
   const name = store.aliens[selected.value]?.name || selected.value
   transformingTo.value = name
 }
@@ -28,6 +37,7 @@ function onEffectDone() {
 }
 
 async function doRevert() {
+  playSound('/MP3/out.mp3')
   await store.doTransform(null)
   selected.value = ''
 }

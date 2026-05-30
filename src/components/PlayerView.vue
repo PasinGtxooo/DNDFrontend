@@ -8,6 +8,7 @@ import AlienCard from './AlienCard.vue'
 import EditPlayerModal from './modals/EditPlayerModal.vue'
 import AddAlienModal from './modals/AddAlienModal.vue'
 import EditAlienModal from './modals/EditAlienModal.vue'
+import PlayerAvatar from './ui/PlayerAvatar.vue'
 
 const showEditPlayer = ref(false)
 const showAddAlien   = ref(false)
@@ -15,18 +16,32 @@ const editAlienId    = ref(null)
 
 const p = computed(() => store.player)
 const id = computed(() => store.selectedId)
-const alienEntries = computed(() => Object.entries(store.aliens))
+
+const realAlienEntries = computed(() => Object.entries(store.aliens))
+const omnitrixSlots    = computed(() => p.value?.omnitrix_slots ?? 0)
+const emptySlotCount   = computed(() => Math.max(0, omnitrixSlots.value - realAlienEntries.value.length))
+const alienEntries     = computed(() => [
+  ...realAlienEntries.value,
+  ...Array.from({ length: emptySlotCount.value }, (_, i) => [`__empty_${i+1}`, null]),
+])
 </script>
 
 <template>
   <div class="p-6 overflow-y-auto h-full">
     <!-- header -->
-    <div class="flex items-start justify-between mb-5">
-      <div>
-        <h2 class="section-title">{{ p?.name || id }}</h2>
-        <p class="text-xs text-slate-400 mt-0.5">ID: {{ id }}</p>
+    <div class="flex items-center justify-between mb-5 gap-4">
+      <div class="flex items-center gap-4 min-w-0">
+        <PlayerAvatar :player-id="id" :name="p?.name" size="xl" />
+        <div class="min-w-0">
+          <h2 class="section-title truncate">{{ p?.name || id }}</h2>
+          <p class="text-sm text-slate-400 font-medium mt-0.5">ID: {{ id }}</p>
+          <div class="flex flex-wrap gap-1.5 mt-1.5">
+            <span class="tag-blue">Lv.{{ p?.level ?? '?' }}</span>
+            <span class="tag-green">XP {{ p?.xp ?? 0 }}</span>
+          </div>
+        </div>
       </div>
-      <div class="flex gap-2">
+      <div class="flex gap-2 flex-shrink-0">
         <button class="btn-outline btn btn-sm" @click="showEditPlayer = true">Edit</button>
         <button class="btn-outline btn btn-sm" @click="store.refreshPlayer()">↻</button>
       </div>
@@ -67,9 +82,20 @@ const alienEntries = computed(() => Object.entries(store.aliens))
       <div class="flex items-center justify-between mb-4">
         <div>
           <div class="section-title">Aliens</div>
-          <div class="text-xs text-[#8a9ab0] mt-0.5">Omnitrix unlocked forms</div>
+          <div class="text-xs text-[#8a9ab0] mt-0.5">
+            Omnitrix unlocked forms
+            <span v-if="omnitrixSlots > 0" class="ml-2 font-semibold"
+              :class="realAlienEntries.length >= omnitrixSlots ? 'text-red-400' : 'text-omni'">
+              {{ realAlienEntries.length }} / {{ omnitrixSlots }} slots
+            </span>
+          </div>
         </div>
-        <button class="btn-primary btn btn-sm" @click="showAddAlien = true">+ Add Alien</button>
+        <button
+          class="btn-primary btn btn-sm"
+          :disabled="omnitrixSlots > 0 && realAlienEntries.length >= omnitrixSlots"
+          :title="omnitrixSlots > 0 && realAlienEntries.length >= omnitrixSlots ? 'Omnitrix slots full' : ''"
+          @click="showAddAlien = true"
+        >+ Add Alien</button>
       </div>
 
       <p v-if="!alienEntries.length" class="text-center text-[#4a5568] text-sm py-12">
@@ -83,6 +109,7 @@ const alienEntries = computed(() => Object.entries(store.aliens))
           :alien-id="aid"
           :alien="alien"
           :is-active="p?.active_alien === aid"
+          :is-empty-slot="alien === null"
           @edit="editAlienId = $event"
         />
       </div>

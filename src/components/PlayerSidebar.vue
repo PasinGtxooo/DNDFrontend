@@ -3,9 +3,11 @@ import { ref } from 'vue'
 import { store } from '../store/index.js'
 import { useToast } from '../composables/useToast.js'
 import AddPlayerModal from './modals/AddPlayerModal.vue'
+import PlayerAvatar from './ui/PlayerAvatar.vue'
 
 const showAdd = ref(false)
 const { toast } = useToast()
+const emit = defineEmits(['select'])
 
 async function removePlayer(e, id) {
   e.stopPropagation()
@@ -31,24 +33,31 @@ async function removePlayer(e, id) {
       <div
         v-for="(p, id) in store.players"
         :key="id"
-        class="group relative px-3.5 py-3 rounded-lg mb-1 border cursor-pointer transition-all duration-150"
+        class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 border cursor-pointer transition-all duration-150"
         :class="store.selectedId === id
           ? 'bg-omni-dark border-omni shadow-omni'
           : 'border-transparent hover:bg-surface-2 hover:border-[#3a4555]'"
-        @click="store.selectPlayer(id)"
+        @click="store.selectPlayer(id); emit('select', id)"
       >
         <!-- active bar -->
         <div v-if="store.selectedId === id"
           class="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-3/5 bg-omni rounded-r" />
 
-        <div class="font-bold text-base text-white pr-6 leading-tight">{{ p.name || id }}</div>
-        <div class="text-sm text-slate-300 mt-1 font-medium">
-          {{ p.hp != null && p.hp_max != null ? `HP ${p.hp}/${p.hp_max} · ` : '' }}Lv.{{ p.level ?? '?' }} · XP {{ p.xp ?? 0 }}
-        </div>
-        <div v-if="p.active_alien"
-          class="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-omni-dark text-omni border border-omni-dim/50">
-          <span class="w-1.5 h-1.5 rounded-full bg-omni animate-dot" />
-          {{ p.active_alien }}
+        <!-- avatar -->
+        <PlayerAvatar :player-id="id" :name="p.name" size="md"
+          :class="store.selectedId === id ? 'border-omni' : ''" />
+
+        <!-- info -->
+        <div class="flex-1 min-w-0 pr-5">
+          <div class="font-bold text-sm text-white leading-tight truncate">{{ p.name || id }}</div>
+          <div class="text-xs text-slate-400 mt-0.5 font-medium">
+            {{ p.hp != null && p.hp_max != null ? `HP ${p.hp}/${p.hp_max} · ` : '' }}Lv.{{ p.level ?? '?' }}
+          </div>
+          <div v-if="p.active_alien"
+            class="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-omni-dark text-omni border border-omni-dim/50">
+            <span class="w-1 h-1 rounded-full bg-omni animate-dot" />
+            {{ p.active_alien }}
+          </div>
         </div>
 
         <button

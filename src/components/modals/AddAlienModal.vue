@@ -43,6 +43,10 @@ const arr = (v) => v.split(',').map(s => s.trim()).filter(Boolean)
 
 async function submit() {
   if (!f.alien_id) return toast('Alien ID is required', 'error')
+  const slots = store.player?.omnitrix_slots ?? 0
+  const used  = Object.keys(store.aliens).length
+  if (slots > 0 && used >= slots)
+    return toast(`Omnitrix full! (${used}/${slots} slots)`, 'error')
   const body = {
     alien_id: f.alien_id, name: f.name || undefined,
     hp: n(f.hp), hp_max: n(f.hp_max), ac: n(f.ac), speed: n(f.speed),
