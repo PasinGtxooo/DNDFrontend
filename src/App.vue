@@ -5,6 +5,7 @@ import { apiBase } from './composables/useApi.js'
 import PlayerSidebar from './components/PlayerSidebar.vue'
 import PlayerView from './components/PlayerView.vue'
 import MasterAliensView from './components/MasterAliensView.vue'
+import CharactersView from './components/CharactersView.vue'
 import DiceRoller from './components/DiceRoller.vue'
 import ToastContainer from './components/ui/ToastContainer.vue'
 
@@ -47,6 +48,9 @@ function selectPlayer(id) {
         <button class="px-4 py-1.5 rounded-md text-sm font-bold uppercase tracking-wide transition-all"
           :class="store.view==='master' ? 'bg-omni-dark text-omni shadow-omni' : 'text-slate-400 hover:text-white'"
           @click="store.view='master'">Master Aliens</button>
+        <button class="px-4 py-1.5 rounded-md text-sm font-bold uppercase tracking-wide transition-all"
+          :class="store.view==='characters' ? 'bg-omni-dark text-omni shadow-omni' : 'text-slate-400 hover:text-white'"
+          @click="store.view='characters'">Characters</button>
       </div>
 
       <!-- right: dice + refresh -->
@@ -67,6 +71,9 @@ function selectPlayer(id) {
       <button class="flex-1 py-2 text-xs font-bold uppercase tracking-wider transition-all"
         :class="store.view==='master' ? 'text-omni border-b-2 border-omni' : 'text-slate-500'"
         @click="store.view='master'">Master Aliens</button>
+      <button class="flex-1 py-2 text-xs font-bold uppercase tracking-wider transition-all"
+        :class="store.view==='characters' ? 'text-omni border-b-2 border-omni' : 'text-slate-500'"
+        @click="store.view='characters'">Characters</button>
     </div>
 
     <!-- ── BODY ── -->
@@ -104,7 +111,8 @@ function selectPlayer(id) {
             </p>
           </div>
         </template>
-        <MasterAliensView v-else-if="store.view==='master'" />
+        <MasterAliensView  v-else-if="store.view==='master'" />
+        <CharactersView    v-else-if="store.view==='characters'" />
       </main>
     </div>
   </div>
