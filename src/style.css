@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; }
+  body {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 500;
+    background: #0a0c0f;
+    color: #f0f4ff;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #3a4555; border-radius: 3px; }
+  input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
+  select option { background: #181d24; color: #f0f4ff; }
+}
+
+@layer components {
+  /* ── inputs ── */
+  .input {
+    @apply w-full bg-surface-2 border border-[#3a4555] rounded-lg px-3 py-2
+           text-white font-semibold text-sm
+           focus:outline-none focus:border-omni focus:ring-2 focus:ring-omni/20
+           placeholder:text-slate-500 transition-all;
+  }
+
+  /* ── labels ── */
+  .label {
+    @apply block text-xs font-bold uppercase tracking-widest text-slate-300 mb-1.5;
+  }
+
+  /* ── buttons ── */
+  .btn {
+    @apply inline-flex items-center gap-1.5 px-4 py-2 rounded-lg
+           font-bold text-sm uppercase tracking-wide transition-all duration-150
+           disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .btn-primary { @apply btn bg-omni-dim text-[#001a0d] hover:bg-omni hover:shadow-omni active:scale-95; }
+  .btn-outline  { @apply btn border border-[#3a4555] text-slate-200 hover:border-omni hover:text-omni active:scale-95; }
+  .btn-danger   { @apply btn border border-red-700/60 text-red-400 hover:bg-red-900/20 active:scale-95; }
+  .btn-sm { @apply text-xs px-3 py-1.5; }
+
+  /* ── cards ── */
+  .card { @apply bg-surface border border-[#2a3340] rounded-xl p-5; }
+  .card-title {
+    @apply font-cinzel text-xs tracking-[3px] uppercase text-omni mb-4
+           flex items-center gap-2
+           after:content-[''] after:flex-1 after:h-px after:bg-gradient-to-r after:from-omni-dark after:to-transparent;
+  }
+
+  /* ── misc ── */
+  .section-title { @apply font-cinzel text-xl font-bold text-white; }
+  .muted   { @apply text-slate-400 font-medium; }
+  .dimmed  { @apply text-slate-500; }
+
+  /* ── tags ── */
+  .tag { @apply px-2.5 py-0.5 rounded-full text-xs font-bold; }
+  .tag-green { @apply tag bg-omni-dark text-omni   border border-omni-dim/40; }
+  .tag-red   { @apply tag bg-red-950   text-red-300 border border-red-700/50; }
+  .tag-blue  { @apply tag bg-blue-950  text-blue-200 border border-blue-700/50; }
+}
