@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 
-export const apiBase = ref('http://localhost:5000')
+export const apiBase = ref('https://dnd-backend-git-main-pasingtxooos-projects.vercel.app/')
 
 async function call(method, path, body) {
   const res = await fetch(apiBase.value.replace(/\/$/, '') + path, {
