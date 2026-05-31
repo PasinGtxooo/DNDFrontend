@@ -8,15 +8,51 @@ const api = useApi()
 export const store = reactive({
   players:      {},
   selectedId:   null,
-  aliens:       {},       // player's aliens
-  masterAliens: {},       // master alien templates
-  view:         'players', // 'players' | 'master'
+  aliens:       {},
+  masterAliens: {},
+  characters:   {},
+  sessions:     {},
+  view:         'players',
+  diceResults:  {},
+  _timer:       null,
 
   get player() { return this.players[this.selectedId] ?? null },
 
+  _syncDice(players) {
+    for (const [id, p] of Object.entries(players)) {
+      if (p.last_roll) this.diceResults[id] = p.last_roll
+    }
+  },
+
+  async broadcastDiceRoll(playerId, rollData) {
+    this.diceResults[playerId] = rollData
+    try { await api.patchPlayer(playerId, { last_roll: rollData }) } catch {}
+  },
+
+  startAutoRefresh() {
+    if (this._timer) return
+    this._timer = setInterval(async () => {
+      try {
+        this.players = await api.getPlayers()
+        this._syncDice(this.players)
+        if (this.selectedId) {
+          this.aliens = await api.getPlayerAliens(this.selectedId)
+        }
+      } catch {}
+    }, 5000)
+  },
+
+  stopAutoRefresh() {
+    clearInterval(this._timer)
+    this._timer = null
+  },
+
   // ── Players ──
   async loadPlayers() {
-    try { this.players = await api.getPlayers() }
+    try {
+      this.players = await api.getPlayers()
+      this._syncDice(this.players)
+    }
     catch (e) { toast(e.message, 'error') }
   },
 
@@ -78,6 +114,48 @@ export const store = reactive({
     await api.deletePlayerAlien(this.selectedId, alienId)
     await this.loadPlayerAliens(this.selectedId)
     toast(`Alien "${alienId}" removed from player.`)
+  },
+
+  // ── Story characters ──
+  async loadCharacters() {
+    try { this.characters = await api.getCharacters() }
+    catch (e) { toast(e.message, 'error') }
+  },
+  async addCharacter(body) {
+    await api.addCharacter(body)
+    await this.loadCharacters()
+    toast(`Character "${body.name}" created!`)
+  },
+  async patchCharacter(id, body) {
+    await api.patchCharacter(id, body)
+    await this.loadCharacters()
+    toast('Character updated!')
+  },
+  async deleteCharacter(id) {
+    await api.deleteCharacter(id)
+    await this.loadCharacters()
+    toast(`Character "${id}" deleted.`)
+  },
+
+  // ── Sessions ──
+  async loadSessions() {
+    try { this.sessions = await api.getSessions() }
+    catch (e) { toast(e.message, 'error') }
+  },
+  async addSession(body) {
+    await api.addSession(body)
+    await this.loadSessions()
+    toast(`Session ${body.session} created!`)
+  },
+  async patchSession(id, body) {
+    await api.patchSession(id, body)
+    await this.loadSessions()
+    toast('Session updated!')
+  },
+  async deleteSession(id) {
+    await api.deleteSession(id)
+    await this.loadSessions()
+    toast('Session deleted.')
   },
 
   // ── Master aliens ──

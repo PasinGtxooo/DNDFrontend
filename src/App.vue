@@ -1,11 +1,12 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { store } from './store/index.js'
 import { apiBase } from './composables/useApi.js'
 import PlayerSidebar from './components/PlayerSidebar.vue'
 import PlayerView from './components/PlayerView.vue'
 import MasterAliensView from './components/MasterAliensView.vue'
 import CharactersView from './components/CharactersView.vue'
+import SessionsView from './components/SessionsView.vue'
 import DiceRoller from './components/DiceRoller.vue'
 import ToastContainer from './components/ui/ToastContainer.vue'
 
@@ -15,7 +16,12 @@ const showSidebar = ref(false)   // mobile drawer
 onMounted(async () => {
   await store.loadPlayers()
   await store.loadMasterAliens()
+  store.loadCharacters()
+  store.loadSessions()
+  store.startAutoRefresh()
 })
+
+onUnmounted(() => store.stopAutoRefresh())
 
 function selectPlayer(id) {
   store.selectPlayer(id)
@@ -51,6 +57,9 @@ function selectPlayer(id) {
         <button class="px-4 py-1.5 rounded-md text-sm font-bold uppercase tracking-wide transition-all"
           :class="store.view==='characters' ? 'bg-omni-dark text-omni shadow-omni' : 'text-slate-400 hover:text-white'"
           @click="store.view='characters'">Characters</button>
+        <button class="px-4 py-1.5 rounded-md text-sm font-bold uppercase tracking-wide transition-all"
+          :class="store.view==='sessions' ? 'bg-omni-dark text-omni shadow-omni' : 'text-slate-400 hover:text-white'"
+          @click="store.view='sessions'">Sessions</button>
       </div>
 
       <!-- right: dice + refresh -->
@@ -74,6 +83,9 @@ function selectPlayer(id) {
       <button class="flex-1 py-2 text-xs font-bold uppercase tracking-wider transition-all"
         :class="store.view==='characters' ? 'text-omni border-b-2 border-omni' : 'text-slate-500'"
         @click="store.view='characters'">Characters</button>
+      <button class="flex-1 py-2 text-xs font-bold uppercase tracking-wider transition-all"
+        :class="store.view==='sessions' ? 'text-omni border-b-2 border-omni' : 'text-slate-500'"
+        @click="store.view='sessions'">Sessions</button>
     </div>
 
     <!-- ── BODY ── -->
@@ -87,8 +99,8 @@ function selectPlayer(id) {
 
       <!-- sidebar -->
       <Transition name="slide">
-        <div class="absolute sm:relative w-72 sm:w-[280px] h-full z-40 sm:z-auto flex-shrink-0 overflow-hidden"
-             :class="showSidebar ? 'left-0' : '-left-72 sm:left-0'"
+        <div class="absolute sm:relative w-80 sm:w-[340px] h-full z-40 sm:z-auto flex-shrink-0 overflow-hidden"
+             :class="showSidebar ? 'left-0' : '-left-80 sm:left-0'"
              v-show="showSidebar || true">
           <div class="absolute sm:relative inset-0"
                :class="{'translate-x-0': showSidebar, '-translate-x-full sm:translate-x-0': !showSidebar}"
@@ -113,6 +125,7 @@ function selectPlayer(id) {
         </template>
         <MasterAliensView  v-else-if="store.view==='master'" />
         <CharactersView    v-else-if="store.view==='characters'" />
+        <SessionsView      v-else-if="store.view==='sessions'" />
       </main>
     </div>
   </div>

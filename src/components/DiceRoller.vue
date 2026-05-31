@@ -1,6 +1,7 @@
 <script setup>
 import * as THREE from 'three'
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, computed, nextTick } from 'vue'
+import { store } from '../store/index.js'
 
 const emit = defineEmits(['close'])
 
@@ -9,6 +10,8 @@ const result    = ref(null)
 const lastDie   = ref(null)
 const isRolling = ref(false)
 const history   = ref([])
+
+const rollingFor = computed(() => store.selectedId)
 
 const DICE = {
   d4:  { sides: 4,  geo: () => new THREE.TetrahedronGeometry(1.3),       color: '#a855f7' },
@@ -62,8 +65,9 @@ function loop() {
 }
 
 function initThree() {
-  const W = canvasEl.value.offsetWidth  || 320
-  const H = canvasEl.value.offsetHeight || 240
+  const container = canvasEl.value.parentElement
+  const W = container.clientWidth  || 380
+  const H = container.clientHeight || 320
   scene  = new THREE.Scene()
   camera = new THREE.PerspectiveCamera(45, W/H, 0.1, 100)
   camera.position.set(0, 0, 5.5)
@@ -95,8 +99,10 @@ function roll(type) {
       const val = Math.floor(Math.random() * DICE[type].sides) + 1
       result.value    = val
       isRolling.value = false
-      history.value.unshift({ die: type, value: val, color: DICE[type].color, ts: Date.now() })
+      const entry = { die: type, value: val, color: DICE[type].color, ts: Date.now(), player: rollingFor.value }
+      history.value.unshift(entry)
       if (history.value.length > 10) history.value.pop()
+      if (rollingFor.value) store.broadcastDiceRoll(rollingFor.value, entry)
     }
   }, 50)
 }
@@ -109,7 +115,7 @@ function resultGlow(val, die) {
   return DICE[die].color
 }
 
-onMounted(initThree)
+onMounted(() => nextTick(initThree))
 onUnmounted(() => { cancelAnimationFrame(raf); renderer?.dispose() })
 </script>
 
@@ -120,7 +126,7 @@ onUnmounted(() => { cancelAnimationFrame(raf); renderer?.dispose() })
     <div class="absolute inset-0 bg-black/60 sm:hidden" @click="emit('close')" />
 
     <!-- panel -->
-    <div class="relative w-full sm:w-80 rounded-t-2xl sm:rounded-2xl overflow-hidden border border-[#2a3340]"
+    <div class="relative w-full sm:w-[420px] rounded-t-2xl sm:rounded-2xl overflow-hidden border border-[#2a3340]"
          style="background:#080b0e; box-shadow:0 0 50px rgba(0,230,118,0.12),0 24px 64px rgba(0,0,0,0.7)">
 
       <!-- header -->
@@ -134,9 +140,18 @@ onUnmounted(() => { cancelAnimationFrame(raf); renderer?.dispose() })
                 @click="emit('close')">✕</button>
       </div>
 
+      <!-- current player indicator -->
+      <div class="px-4 pt-2 pb-1 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+        <span v-if="rollingFor">
+          Rolling for
+          <span class="text-omni">{{ store.players[rollingFor]?.name || rollingFor }}</span>
+        </span>
+        <span v-else class="italic text-slate-600">เปิดหน้า player เพื่อทอยให้</span>
+      </div>
+
       <!-- 3D canvas -->
-      <div class="relative mx-3 mt-3 rounded-xl overflow-hidden"
-           style="height:220px; background:radial-gradient(ellipse at center,#061206,#030805)">
+      <div class="relative mx-3 mt-2 rounded-xl overflow-hidden"
+           style="height:320px; background:radial-gradient(ellipse at center,#061206,#030805)">
         <div class="absolute inset-0 pointer-events-none"
              style="background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,230,118,0.015) 3px,rgba(0,230,118,0.015) 4px);z-index:2"/>
         <canvas ref="canvasEl" class="w-full h-full block" />
@@ -146,7 +161,7 @@ onUnmounted(() => { cancelAnimationFrame(raf); renderer?.dispose() })
           <div v-if="result !== null && !isRolling"
                class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
             <div class="font-cinzel font-black leading-none transition-all"
-                 :class="result >= 10 ? 'text-[72px]' : 'text-[88px]'"
+                 :class="result >= 10 ? 'text-[96px]' : 'text-[112px]'"
                  :style="`color:${resultGlow(result, lastDie)}; text-shadow:0 0 30px ${resultGlow(result, lastDie)}`">
               {{ result }}
             </div>
@@ -168,10 +183,10 @@ onUnmounted(() => { cancelAnimationFrame(raf); renderer?.dispose() })
       </div>
 
       <!-- die buttons — 2 rows × 3 -->
-      <div class="grid grid-cols-3 gap-2 px-3 py-3">
+      <div class="grid grid-cols-3 gap-2.5 px-3 py-3">
         <button
           v-for="(cfg, d) in DICE" :key="d"
-          class="relative py-4 rounded-xl font-cinzel font-black text-lg tracking-wider border transition-all active:scale-95"
+          class="relative py-5 rounded-xl font-cinzel font-black text-xl tracking-wider border transition-all active:scale-95"
           :class="lastDie === d && !isRolling
             ? 'border-2 scale-[1.03]'
             : 'border-[#2a3340] bg-[#0f1318] text-slate-300 hover:border-slate-500'"
@@ -200,7 +215,9 @@ onUnmounted(() => { cancelAnimationFrame(raf); renderer?.dispose() })
             :style="i === 0
               ? `background:#0a140a; border-color:${h.color}66; color:${h.color}`
               : 'background:#0f1318; border-color:#2a3340; color:#64748b'"
-          >{{ h.die }}=<strong :style="i===0 ? `color:${h.color}` : ''">{{ h.value }}</strong></span>
+          >
+            <span v-if="h.player" class="opacity-70 mr-0.5">{{ store.players[h.player]?.name || h.player }}·</span>{{ h.die }}=<strong :style="i===0 ? `color:${h.color}` : ''">{{ h.value }}</strong>
+          </span>
         </div>
       </div>
 

@@ -13,6 +13,20 @@ import PlayerAvatar from './ui/PlayerAvatar.vue'
 const showEditPlayer = ref(false)
 const showAddAlien   = ref(false)
 const editAlienId    = ref(null)
+const newItem = ref('')
+
+async function addItem() {
+  const item = newItem.value.trim()
+  if (!item) return
+  const updated = [...(p.value?.inventory || []), item]
+  await store.patchPlayer({ inventory: updated })
+  newItem.value = ''
+}
+
+async function removeItem(item) {
+  const updated = (p.value?.inventory || []).filter(i => i !== item)
+  await store.patchPlayer({ inventory: updated })
+}
 
 const p = computed(() => store.player)
 const id = computed(() => store.selectedId)
@@ -69,10 +83,32 @@ const alienEntries     = computed(() => [
         </div>
       </div>
 
-      <div v-if="p?.inventory?.length" class="mt-4">
-        <div class="text-[10px] font-semibold uppercase tracking-widest text-[#8a9ab0] mb-2">Inventory</div>
-        <div class="flex flex-wrap gap-1.5">
-          <span v-for="item in p.inventory" :key="item" class="tag-blue">{{ item }}</span>
+      <div class="mt-4">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-[10px] font-semibold uppercase tracking-widest text-[#8a9ab0]">Inventory</div>
+        </div>
+        <div class="flex flex-wrap gap-1.5 mb-2">
+          <span v-if="!p?.inventory?.length" class="text-xs text-slate-600">— empty —</span>
+          <span
+            v-for="item in p?.inventory" :key="item"
+            class="group flex items-center gap-1 tag-blue pr-1 cursor-default"
+          >
+            {{ item }}
+            <button
+              class="opacity-0 group-hover:opacity-100 text-blue-300/60 hover:text-red-400 text-[10px] leading-none transition-all ml-0.5"
+              @click="removeItem(item)"
+            >✕</button>
+          </span>
+        </div>
+        <!-- add item -->
+        <div class="flex gap-1.5">
+          <input
+            v-model="newItem"
+            class="input flex-1 text-sm py-1.5"
+            placeholder="เพิ่ม item..."
+            @keydown.enter="addItem"
+          />
+          <button class="btn-primary btn btn-sm px-3" @click="addItem">+</button>
         </div>
       </div>
     </div>

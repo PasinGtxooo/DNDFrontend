@@ -1,172 +1,99 @@
 <script setup>
-const CHARACTERS = [
-  // ── ALLIES ──────────────────────────────────────────────
-  {
-    id: 'tetrax',
-    name: 'Tetrax Shard',
-    species: 'Petrosapien (Diamondhead\'s species)',
-    role: 'พี่เลี้ยง / ผู้สนับสนุนทีม',
-    faction: 'ally',
-    notes: [
-      'ให้อุปกรณ์, วิเคราะห์ข้อมูล, ส่ง Mission',
-      'มียานอวกาศลับ + ฐานใต้ดิน',
-    ],
-  },
-  {
-    id: 'myaxx',
-    name: 'Myaxx',
-    species: 'Chimera Sui Generis (Vilgax\'s species)',
-    role: 'นักวิทยาศาสตร์ลี้ภัย / อดีตลูกน้อง Vilgax',
-    faction: 'ally',
-    notes: [
-      'ให้ข้อมูล Vilgax Labs',
-      'B สแกน DNA Vilgax จากเธอ',
-    ],
-  },
-  {
-    id: 'alpha',
-    name: 'Alpha',
-    species: 'สัตว์กลายพันธุ์',
-    role: 'หัวหน้าฝูง (ปรับตัวแล้ว)',
-    faction: 'ally',
-    emoji: '🐺',
-    notes: [
-      'ถูกจับ Session 2 → รักษาหายแล้ว ไม่ดุร้าย',
-      'อยู่ที่ฐาน Tetrax',
-    ],
-  },
-  {
-    id: 'dog4',
-    name: 'Dog 4',
-    species: 'สัตว์กลายพันธุ์',
-    role: 'สมาชิกฝูง (ปรับตัวแล้ว)',
-    faction: 'ally',
-    emoji: '🐕',
-    notes: [
-      'ถูกจับ Session 2 → รักษาหายแล้ว ไม่ดุร้าย',
-      'อยู่ที่ฐาน Tetrax',
-    ],
-  },
+import { onMounted, ref, computed } from 'vue'
+import { store } from '../store/index.js'
+import { useToast } from '../composables/useToast.js'
 
-  // ── ENEMIES ─────────────────────────────────────────────
-  {
-    id: 'vilgax',
-    name: 'Vilgax',
-    species: 'Chimera Sui Generis',
-    role: 'ตัวร้ายหลัก! ผู้พิชิตจักรวาล',
-    faction: 'enemy',
-    notes: [
-      'กำลังสร้างสัตว์กลายพันธุ์บนโลกผ่าน V.I.L. Corporation',
-      'ยังไม่เจอตัวจริง (แต่ B มี DNA ของเขา!)',
-      'มีแล็บลับอีก 2 แห่งบนโลก',
-    ],
-  },
-  {
-    id: 'kraab',
-    name: 'Kraab',
-    species: 'Unknown (ปูยักษ์)',
-    role: 'นักล่ารางวัล รับจ้าง Vilgax',
-    faction: 'enemy',
-    emoji: '🦀',
-    status: 'ถูกจับ',
-    notes: [
-      'เคยอัพเกรดอาวุธมาสู้ทีม',
-      'ถูกจับ Session 3 → ส่งให้ Plumbers แล้ว',
-      'B ขโมยอาวุธไปหมด (Sniper, Missiles, Shield, Claw)',
-    ],
-  },
-  {
-    id: 'vilgax_robot',
-    name: 'Vilgax Robot',
-    species: 'หุ่นยนต์',
-    role: 'หุ่นยนต์ของ Vilgax',
-    faction: 'enemy',
-    emoji: '🤖',
-    status: 'ถูกทำลาย',
-    notes: [
-      'เจอ Session 1 ที่โกดังสารเคมี',
-      'G ทำ EMP ทำลายไป',
-    ],
-  },
-  {
-    id: 'mutant_dogs',
-    name: 'Mutant Dogs x4',
-    species: 'สัตว์กลายพันธุ์',
-    role: 'สัตว์กลายพันธุ์จาก Project CHIMERA',
-    faction: 'enemy',
-    emoji: '🐺',
-    status: 'ส่วนใหญ่ตายแล้ว',
-    notes: [
-      'Dog 1, 2, 3: ตายใน Session 2',
-      'Dog 4: จับได้ → รักษาหายแล้ว (ย้ายไป Ally แล้ว)',
-    ],
-  },
-  {
-    id: 'vilgax_drones',
-    name: 'Vilgax Drones x3',
-    species: 'หุ่นยนต์',
-    role: 'ลูกน้องหุ่นยนต์ Vilgax',
-    faction: 'enemy',
-    emoji: '🤖',
-    status: 'กำลังสู้อยู่!',
-    hp: 35,
-    ac: 16,
-    notes: [
-      'กำลังเจออยู่ตอนนี้!',
-      'ไล่ตาม Kineceleran',
-    ],
-  },
+const { toast } = useToast()
+const showAdd  = ref(false)
+const editChar = ref(null)
 
-  // ── UNKNOWN ─────────────────────────────────────────────
-  {
-    id: 'kineceleran',
-    name: 'Kineceleran',
-    species: 'Kineceleran (XLR8\'s species)',
-    role: '??? ยังไม่รู้ฝ่าย',
-    faction: 'unknown',
-    emoji: '🦎',
-    notes: [
-      'บาดเจ็บ ตกยานมาในป่า',
-      'บอกแค่ว่า Vilgax ไล่ตาม',
-      'ตัวดีหรือตัวร้าย? ยังไม่รู้!',
-    ],
-  },
-]
+onMounted(() => store.loadCharacters())
 
-const factionLabel = { ally: '🟢 ALLIES', enemy: '🔴 ENEMIES', unknown: '❓ UNKNOWN' }
 const factionOrder = ['ally', 'enemy', 'unknown']
-
-const grouped = factionOrder.map(f => ({
-  faction: f,
-  label: factionLabel[f],
-  chars: CHARACTERS.filter(c => c.faction === f),
-}))
-
-const factionBorder = {
-  ally:    'border-emerald-500/50',
-  enemy:   'border-red-500/50',
-  unknown: 'border-yellow-500/50',
-}
-const factionBg = {
-  ally:    'bg-emerald-950/30',
-  enemy:   'bg-red-950/30',
-  unknown: 'bg-yellow-950/20',
-}
-const factionText = {
-  ally:    'text-emerald-400',
-  enemy:   'text-red-400',
-  unknown: 'text-yellow-400',
-}
+const factionLabel = { ally: '🟢 ALLIES', enemy: '🔴 ENEMIES', unknown: '❓ UNKNOWN' }
+const factionText  = { ally: 'text-emerald-400', enemy: 'text-red-400', unknown: 'text-yellow-400' }
+const factionBorder= { ally: 'border-emerald-500/40', enemy: 'border-red-500/40', unknown: 'border-yellow-500/40' }
+const factionBg    = { ally: '#041208', enemy: '#120404', unknown: '#0e0c02' }
 const factionBadge = {
   ally:    'bg-emerald-900/60 text-emerald-200 border-emerald-500/50',
   enemy:   'bg-red-900/60    text-red-200    border-red-500/50',
   unknown: 'bg-yellow-900/60 text-yellow-200 border-yellow-500/50',
 }
-const statusBadge = {
-  'ถูกจับ':          'bg-orange-900/60 text-orange-200 border-orange-500/50',
-  'ถูกทำลาย':        'bg-slate-800/80  text-slate-400  border-slate-600/50',
-  'กำลังสู้อยู่!':   'bg-red-900/80    text-red-200    border-red-400/60 animate-pulse',
-  'ส่วนใหญ่ตายแล้ว': 'bg-slate-800/80  text-slate-500  border-slate-600/50',
+
+const grouped = computed(() =>
+  factionOrder.map(f => ({
+    faction: f,
+    label:   factionLabel[f],
+    chars:   Object.entries(store.characters)
+               .filter(([, c]) => c.faction === f)
+               .sort(([,a],[,b]) => (a.name||'').localeCompare(b.name||'')),
+  })).filter(g => g.chars.length > 0)
+)
+
+// ── add / edit form ──────────────────────────────────────
+const FACTIONS = ['ally','enemy','unknown']
+const form = ref(emptyForm())
+function emptyForm() {
+  return { character_id:'', name:'', faction:'ally', species:'', status:'', extra_info:'', image_url:'', hp:'', ac:'' }
+}
+
+function openAdd() { form.value = emptyForm(); showAdd.value = true }
+function openEdit(id, c) {
+  form.value = {
+    character_id: id,
+    name:       c.name       ?? '',
+    faction:    c.faction    ?? 'ally',
+    species:    c.species    ?? '',
+    status:     c.status     ?? '',
+    extra_info: c.extra_info ?? '',
+    image_url:  c.image_url  ?? '',
+    hp:         c.hp         ?? '',
+    ac:         c.ac         ?? '',
+  }
+  editChar.value = id
+}
+
+async function submitAdd() {
+  if (!form.value.character_id || !form.value.name) return toast('ID and Name required','error')
+  const body = {
+    character_id: form.value.character_id,
+    name:       form.value.name,
+    faction:    form.value.faction,
+    species:    form.value.species || null,
+    status:     form.value.status  || null,
+    extra_info: form.value.extra_info || null,
+    image_url:  form.value.image_url  || null,
+    hp:         form.value.hp !== '' ? Number(form.value.hp) : null,
+    ac:         form.value.ac !== '' ? Number(form.value.ac) : null,
+  }
+  await store.addCharacter(body)
+  showAdd.value = false
+}
+
+async function submitEdit() {
+  const body = {
+    name:       form.value.name,
+    faction:    form.value.faction,
+    species:    form.value.species || null,
+    status:     form.value.status  || null,
+    extra_info: form.value.extra_info || null,
+    image_url:  form.value.image_url  || null,
+    hp:         form.value.hp !== '' ? Number(form.value.hp) : null,
+    ac:         form.value.ac !== '' ? Number(form.value.ac) : null,
+  }
+  await store.patchCharacter(editChar.value, body)
+  editChar.value = null
+}
+
+async function remove(id, name) {
+  if (!confirm(`Delete "${name}"?`)) return
+  await store.deleteCharacter(id)
+}
+
+const imgErrors = ref({})
+function initials(name, id) {
+  const n = (name || id || '?').trim().split(/[\s_-]+/)
+  return n.length >= 2 ? (n[0][0]+n[1][0]).toUpperCase() : (name||id||'?').slice(0,2).toUpperCase()
 }
 </script>
 
@@ -174,90 +101,158 @@ const statusBadge = {
   <div class="p-4 sm:p-6 overflow-y-auto h-full">
     <div class="max-w-5xl mx-auto">
 
-      <!-- page title -->
-      <div class="mb-6">
-        <h1 class="font-cinzel font-black text-2xl sm:text-3xl tracking-widest text-white">
-          Story Characters
-        </h1>
-        <p class="text-sm text-slate-500 mt-1">ตัวละครทั้งหมดในเรื่อง</p>
+      <!-- header -->
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="font-cinzel font-black text-2xl sm:text-3xl tracking-widest text-white">Story Characters</h1>
+          <p class="text-sm text-slate-500 mt-1">ตัวละครทั้งหมดในเรื่อง</p>
+        </div>
+        <button class="btn-primary btn" @click="openAdd">+ Add Character</button>
       </div>
+
+      <p v-if="!Object.keys(store.characters).length" class="text-center text-slate-600 py-20 text-sm">
+        ยังไม่มีตัวละคร — กด <strong class="text-slate-400">+ Add Character</strong> เพื่อเพิ่ม
+      </p>
 
       <!-- faction groups -->
       <div v-for="group in grouped" :key="group.faction" class="mb-8">
-
-        <!-- group header -->
         <div class="flex items-center gap-3 mb-3">
-          <span class="font-cinzel font-black text-base sm:text-lg tracking-widest"
-            :class="factionText[group.faction]">
+          <span class="font-cinzel font-black text-base sm:text-lg tracking-widest" :class="factionText[group.faction]">
             {{ group.label }}
           </span>
-          <div class="flex-1 h-px" :class="factionBorder[group.faction]"
-               style="background: currentColor; opacity: 0.3" />
-          <span class="text-xs font-bold text-slate-500">{{ group.chars.length }} ตัวละคร</span>
+          <div class="flex-1 h-px opacity-20" :class="factionBorder[group.faction]" style="background:currentColor"/>
+          <span class="text-xs font-bold text-slate-500">{{ group.chars.length }}</span>
         </div>
 
-        <!-- cards grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           <div
-            v-for="c in group.chars" :key="c.id"
-            class="border rounded-xl overflow-hidden flex flex-col"
-            :class="[factionBorder[group.faction], factionBg[group.faction]]"
-            style="background: #0e1318"
+            v-for="[id, c] in group.chars" :key="id"
+            class="group border rounded-xl overflow-hidden flex flex-col cursor-pointer transition-all duration-150 hover:scale-[1.01]"
+            :class="factionBorder[group.faction]"
+            :style="`background:${factionBg[group.faction]}`"
+            @click="openEdit(id, c)"
           >
-            <!-- card header -->
-            <div class="px-4 pt-3 pb-2 border-b border-white/5">
-              <div class="flex items-start justify-between gap-2">
-                <div class="min-w-0">
-                  <div class="font-cinzel font-bold text-base text-white leading-tight">
-                    {{ c.emoji ? c.emoji + ' ' : '' }}{{ c.name }}
-                  </div>
-                  <div class="text-[11px] text-slate-500 mt-0.5 truncate">{{ c.species }}</div>
-                </div>
-                <!-- status badge -->
-                <span v-if="c.status"
-                  class="flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold border mt-0.5"
-                  :class="statusBadge[c.status] ?? 'bg-slate-800 text-slate-400 border-slate-600'">
-                  {{ c.status }}
+            <!-- image -->
+            <div class="relative overflow-hidden flex-shrink-0" style="height:160px">
+              <img
+                v-if="c.image_url && !imgErrors[id]"
+                :src="c.image_url"
+                :alt="c.name"
+                class="w-full h-full object-cover object-top"
+                @error="imgErrors[id] = true"
+              />
+              <div v-else
+                class="w-full h-full flex items-center justify-center font-cinzel font-black text-4xl"
+                :style="`background:radial-gradient(circle at 40% 35%,#1a1a1a,#0a0a0a); color:#4a5568`">
+                {{ initials(c.name, id) }}
+              </div>
+
+              <!-- gradient -->
+              <div class="absolute inset-x-0 bottom-0 h-16"
+                   style="background:linear-gradient(to top,#000 0%,transparent 100%)" />
+
+              <!-- faction badge -->
+              <span class="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-black border"
+                    :class="factionBadge[group.faction]">
+                {{ group.faction === 'ally' ? 'ALLY' : group.faction === 'enemy' ? 'ENEMY' : '???' }}
+              </span>
+
+              <!-- hp/ac if enemy -->
+              <div v-if="c.hp != null || c.ac != null" class="absolute top-2 right-2 flex gap-1">
+                <span v-if="c.hp != null" class="px-1.5 py-0.5 rounded text-[10px] font-black bg-red-950/80 text-red-300 border border-red-700/50">
+                  HP {{ c.hp }}
                 </span>
-                <span v-else
-                  class="flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold border mt-0.5"
-                  :class="factionBadge[c.faction]">
-                  {{ group.faction === 'ally' ? 'ALLY' : group.faction === 'enemy' ? 'ENEMY' : '???' }}
+                <span v-if="c.ac != null" class="px-1.5 py-0.5 rounded text-[10px] font-black bg-blue-950/80 text-blue-300 border border-blue-700/50">
+                  AC {{ c.ac }}
                 </span>
               </div>
-              <div class="text-xs font-semibold mt-1" :class="factionText[group.faction]">
-                {{ c.role }}
+
+              <!-- name on image -->
+              <div class="absolute bottom-0 inset-x-0 px-3 pb-2">
+                <div class="font-cinzel font-bold text-sm text-white leading-tight drop-shadow-lg">{{ c.name }}</div>
+                <div v-if="c.species" class="text-[11px] text-slate-400 mt-0.5">{{ c.species }}</div>
               </div>
             </div>
 
-            <!-- stats row (for enemies with hp/ac) -->
-            <div v-if="c.hp != null || c.ac != null" class="flex gap-2 px-4 py-2 border-b border-white/5">
-              <div v-if="c.hp != null"
-                class="flex-1 bg-black/30 rounded-lg text-center py-1.5 border border-red-900/40">
-                <div class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">HP</div>
-                <div class="text-sm font-black text-red-300">{{ c.hp }}</div>
+            <!-- body -->
+            <div class="px-3 py-2.5 flex-1 flex flex-col gap-1.5">
+              <!-- status -->
+              <div v-if="c.status"
+                class="inline-flex self-start items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border"
+                :class="factionBadge[group.faction]">
+                {{ c.status }}
               </div>
-              <div v-if="c.ac != null"
-                class="flex-1 bg-black/30 rounded-lg text-center py-1.5 border border-blue-900/40">
-                <div class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">AC</div>
-                <div class="text-sm font-black text-blue-300">{{ c.ac }}</div>
-              </div>
+              <!-- extra info -->
+              <p v-if="c.extra_info" class="text-xs text-slate-400 leading-relaxed line-clamp-3">
+                {{ c.extra_info }}
+              </p>
             </div>
 
-            <!-- notes -->
-            <div class="px-4 py-2.5 flex-1">
-              <ul class="space-y-1">
-                <li v-for="note in c.notes" :key="note"
-                  class="flex items-start gap-1.5 text-xs text-slate-400 leading-snug">
-                  <span class="flex-shrink-0 mt-0.5 opacity-50">▸</span>
-                  <span>{{ note }}</span>
-                </li>
-              </ul>
-            </div>
+            <!-- delete -->
+            <button
+              class="opacity-0 group-hover:opacity-100 absolute top-1 right-1 w-6 h-6 flex items-center justify-center text-slate-500 hover:text-red-400 transition-all text-xs bg-black/60 rounded-full z-10"
+              @click.stop="remove(id, c.name)"
+            >✕</button>
           </div>
         </div>
       </div>
 
     </div>
   </div>
+
+  <!-- Add / Edit modal -->
+  <Teleport to="body">
+    <div v-if="showAdd || editChar"
+      class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+      @click.self="showAdd=false; editChar=null">
+      <div class="bg-[#0e1318] border border-[#2a3340] rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-[#2a3340]">
+          <span class="font-cinzel font-bold text-base">{{ editChar ? 'Edit Character' : 'Add Character' }}</span>
+          <button class="text-slate-500 hover:text-white text-lg" @click="showAdd=false; editChar=null">✕</button>
+        </div>
+        <div class="p-5 space-y-3">
+          <div v-if="!editChar">
+            <label class="label">Character ID</label>
+            <input v-model="form.character_id" class="input" placeholder="e.g. tetrax" />
+          </div>
+          <div>
+            <label class="label">Name</label>
+            <input v-model="form.name" class="input" placeholder="Tetrax Shard" />
+          </div>
+          <div>
+            <label class="label">Faction</label>
+            <select v-model="form.faction" class="input">
+              <option v-for="f in FACTIONS" :key="f" :value="f">{{ f }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">Species</label>
+            <input v-model="form.species" class="input" placeholder="Petrosapien" />
+          </div>
+          <div>
+            <label class="label">Status</label>
+            <input v-model="form.status" class="input" placeholder="At base Tetrax / Captured / ..." />
+          </div>
+          <div>
+            <label class="label">Image URL</label>
+            <input v-model="form.image_url" class="input" placeholder="/Img/characters/tetrax.webp" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="label">HP</label><input v-model="form.hp" type="number" class="input" /></div>
+            <div><label class="label">AC</label><input v-model="form.ac" type="number" class="input" /></div>
+          </div>
+          <div>
+            <label class="label">Extra Info</label>
+            <textarea v-model="form.extra_info" class="input" rows="3" placeholder="ข้อมูลเพิ่มเติม..." />
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 px-5 pb-5">
+          <button class="btn-outline btn" @click="showAdd=false; editChar=null">Cancel</button>
+          <button class="btn-primary btn" @click="editChar ? submitEdit() : submitAdd()">
+            {{ editChar ? 'Save' : 'Add' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>

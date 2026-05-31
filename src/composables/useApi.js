@@ -32,5 +32,15 @@ export function useApi() {
     addMasterAlien:    (body)           => call('POST',   '/alien', body),
     patchMasterAlien:  (id, body)       => call('PATCH',  `/alien/${id}`, body),
     deleteMasterAlien: (id)             => call('DELETE', `/alien/${id}`),
+    // Story characters
+    getCharacters:     ()               => call('GET',    '/characters'),
+    addCharacter:      (body)           => call('POST',   '/character', body),
+    patchCharacter:    (id, body)       => call('PATCH',  `/character/${id}`, body),
+    deleteCharacter:   (id)             => call('DELETE', `/character/${id}`),
+    // Sessions
+    getSessions:       ()               => call('GET',    '/sessions'),
+    addSession:        (body)           => call('POST',   '/session', body),
+    patchSession:      (id, body)       => call('PATCH',  `/session/${id}`, body),
+    deleteSession:     (id)             => call('DELETE', `/session/${id}`),
   }
 }
