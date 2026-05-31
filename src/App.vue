@@ -18,10 +18,10 @@ onMounted(async () => {
   await store.loadMasterAliens()
   store.loadCharacters()
   store.loadSessions()
-  store.startAutoRefresh()
+  store.listenDiceResults()
 })
 
-onUnmounted(() => store.stopAutoRefresh())
+onUnmounted(() => store.stopDiceListener())
 
 function selectPlayer(id) {
   store.selectPlayer(id)
