@@ -51,7 +51,7 @@ function hpColor(pct) {
           ? 'border-omni shadow-omni bg-omni-dark'
           : 'border-[#2a3340] hover:border-[#3a4555] hover:bg-surface-2'"
         style="background: #0b1014"
-        @click="store.selectPlayer(id); emit('select', id)"
+        @click="emit('select', id)"
       >
         <!-- selected accent bar -->
         <div v-if="store.selectedId === id"
