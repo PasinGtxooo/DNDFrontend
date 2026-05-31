@@ -1,9 +1,14 @@
 import { reactive } from 'vue'
+import { collection, doc, setDoc, onSnapshot } from 'firebase/firestore'
+import { db } from '../composables/useFirebase.js'
 import { useApi } from '../composables/useApi.js'
 import { useToast } from '../composables/useToast.js'
 
 const { toast } = useToast()
 const api = useApi()
+
+// Firestore path: DND/dice_results/{playerId}
+const diceCol = () => collection(db, 'DND_dice_results')
 
 export const store = reactive({
   players:      {},
@@ -14,45 +19,35 @@ export const store = reactive({
   sessions:     {},
   view:         'players',
   diceResults:  {},
-  _timer:       null,
+  _diceUnsub:   null,
 
   get player() { return this.players[this.selectedId] ?? null },
 
-  _syncDice(players) {
-    for (const [id, p] of Object.entries(players)) {
-      if (p.last_roll) this.diceResults[id] = p.last_roll
-    }
-  },
-
   async broadcastDiceRoll(playerId, rollData) {
     this.diceResults[playerId] = rollData
-    try { await api.patchPlayer(playerId, { last_roll: rollData }) } catch {}
+    try { await setDoc(doc(diceCol(), playerId), rollData) } catch {}
   },
 
-  startAutoRefresh() {
-    if (this._timer) return
-    this._timer = setInterval(async () => {
-      try {
-        this.players = await api.getPlayers()
-        this._syncDice(this.players)
-        if (this.selectedId) {
-          this.aliens = await api.getPlayerAliens(this.selectedId)
+  listenDiceResults() {
+    if (this._diceUnsub) return
+    this._diceUnsub = onSnapshot(diceCol(), snapshot => {
+      snapshot.docChanges().forEach(change => {
+        if (change.type === 'removed') {
+          delete this.diceResults[change.doc.id]
+        } else {
+          this.diceResults[change.doc.id] = change.doc.data()
         }
-      } catch {}
-    }, 5000)
+      })
+    })
   },
 
-  stopAutoRefresh() {
-    clearInterval(this._timer)
-    this._timer = null
+  stopDiceListener() {
+    if (this._diceUnsub) { this._diceUnsub(); this._diceUnsub = null }
   },
 
   // ── Players ──
   async loadPlayers() {
-    try {
-      this.players = await api.getPlayers()
-      this._syncDice(this.players)
-    }
+    try { this.players = await api.getPlayers() }
     catch (e) { toast(e.message, 'error') }
   },
 
