@@ -13,7 +13,18 @@ import PlayerAvatar from './ui/PlayerAvatar.vue'
 const showEditPlayer = ref(false)
 const showAddAlien   = ref(false)
 const editAlienId    = ref(null)
-const newItem = ref('')
+const newItem       = ref('')
+const editingUpgrade = ref(false)
+const upgradeText    = ref('')
+
+function startEditUpgrade() {
+  upgradeText.value = p.value?.upgrade ?? ''
+  editingUpgrade.value = true
+}
+async function saveUpgrade() {
+  await store.patchPlayer({ upgrade: upgradeText.value || null })
+  editingUpgrade.value = false
+}
 
 async function addItem() {
   const item = newItem.value.trim()
@@ -80,6 +91,29 @@ const alienEntries     = computed(() => [
         <div class="text-[10px] font-semibold uppercase tracking-widest text-[#8a9ab0] mb-2">Status Effects</div>
         <div class="flex flex-wrap gap-1.5">
           <span v-for="s in p.status_effects" :key="s" class="tag-red">{{ s }}</span>
+        </div>
+      </div>
+
+      <!-- Upgrade -->
+      <div class="mt-4">
+        <div class="text-[10px] font-semibold uppercase tracking-widest text-[#8a9ab0] mb-2">Upgrade</div>
+        <div v-if="!editingUpgrade">
+          <div class="flex items-center gap-2">
+            <span v-if="p?.upgrade" class="text-sm text-yellow-300 font-semibold flex-1">⚡ {{ p.upgrade }}</span>
+            <span v-else class="text-xs text-slate-600 flex-1">— ยังไม่มี upgrade —</span>
+            <button class="text-xs text-slate-500 hover:text-omni transition-colors" @click="startEditUpgrade">Edit</button>
+          </div>
+        </div>
+        <div v-else class="flex gap-1.5">
+          <input
+            v-model="upgradeText"
+            class="input flex-1 text-sm py-1.5"
+            placeholder="Combat Training: First Strike..."
+            @keydown.enter="saveUpgrade"
+            @keydown.esc="editingUpgrade = false"
+          />
+          <button class="btn-primary btn btn-sm px-3" @click="saveUpgrade">Save</button>
+          <button class="btn-outline btn btn-sm px-2" @click="editingUpgrade = false">✕</button>
         </div>
       </div>
 
