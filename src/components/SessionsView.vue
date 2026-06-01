@@ -27,8 +27,16 @@ function next() { if (canNext.value) page.value++ }
 const playerList = computed(() => Object.entries(store.players))
 
 // ── form ─────────────────────────────────────────────────
+const toLines  = (arr) => (arr ?? []).join('\n')
+const fromLines = (str) => str.split('\n').map(s => s.trim()).filter(Boolean)
+
 function emptyForm() {
-  return { session: '', title: '', summary: '', player_upgrades: {}, character_notes: {} }
+  return {
+    session: '', title: '', summary: '',
+    xp_gained: '', xp_total: '', level_after: '',
+    missions_completed: '', key_events: '', loot: '', best_quotes: '',
+    player_upgrades: {}, character_notes: {},
+  }
 }
 const form = ref(emptyForm())
 function setUpgrade(pid, val)  { form.value.player_upgrades[pid] = val }
@@ -37,36 +45,49 @@ function setCharNote(cid, val) { form.value.character_notes[cid] = val }
 function openAdd() { form.value = emptyForm(); showAdd.value = true }
 function openEdit(id, s) {
   form.value = {
-    session:         s.session ?? '',
-    title:           s.title   ?? '',
-    summary:         s.summary ?? '',
-    player_upgrades: { ...(s.player_upgrades ?? {}) },
-    character_notes: { ...(s.character_notes ?? {}) },
+    session:            s.session     ?? '',
+    title:              s.title       ?? '',
+    summary:            s.summary     ?? '',
+    xp_gained:          s.xp_gained   ?? '',
+    xp_total:           s.xp_total    ?? '',
+    level_after:        s.level_after ?? '',
+    missions_completed: toLines(s.missions_completed),
+    key_events:         toLines(s.key_events),
+    loot:               toLines(s.loot),
+    best_quotes:        toLines(s.best_quotes),
+    player_upgrades:    { ...(s.player_upgrades ?? {}) },
+    character_notes:    { ...(s.character_notes ?? {}) },
   }
   editId.value = id
 }
 
+function buildBody() {
+  const f = form.value
+  return {
+    session:            Number(f.session),
+    title:              f.title       || null,
+    summary:            f.summary     || null,
+    xp_gained:          f.xp_gained   !== '' ? Number(f.xp_gained)   : null,
+    xp_total:           f.xp_total    !== '' ? Number(f.xp_total)    : null,
+    level_after:        f.level_after !== '' ? Number(f.level_after) : null,
+    missions_completed: fromLines(f.missions_completed),
+    key_events:         fromLines(f.key_events),
+    loot:               fromLines(f.loot),
+    best_quotes:        fromLines(f.best_quotes),
+    player_upgrades:    f.player_upgrades,
+    character_notes:    f.character_notes,
+  }
+}
+
 async function submitAdd() {
-  if (form.value.session === '') return toast('Session number required','error')
-  await store.addSession({
-    session:         Number(form.value.session),
-    title:           form.value.title   || null,
-    summary:         form.value.summary || null,
-    player_upgrades: form.value.player_upgrades,
-    character_notes: form.value.character_notes,
-  })
+  if (form.value.session === '') return toast('Session number required', 'error')
+  await store.addSession(buildBody())
   showAdd.value = false
   page.value = sessionList.value.length - 1
 }
 
 async function submitEdit() {
-  await store.patchSession(editId.value, {
-    session:         Number(form.value.session),
-    title:           form.value.title   || null,
-    summary:         form.value.summary || null,
-    player_upgrades: form.value.player_upgrades,
-    character_notes: form.value.character_notes,
-  })
+  await store.patchSession(editId.value, buildBody())
   editId.value = null
 }
 
@@ -259,14 +280,47 @@ async function remove(id, num) {
           <button class="text-slate-500 hover:text-white text-lg" @click="showAdd=false; editId=null">✕</button>
         </div>
         <div class="p-5 space-y-4">
+          <!-- session # + title -->
           <div class="grid grid-cols-2 gap-3">
             <div><label class="label">Session #</label><input v-model="form.session" type="number" class="input" /></div>
             <div><label class="label">Title</label><input v-model="form.title" class="input" placeholder="The Hunt" /></div>
           </div>
-          <div>
-            <label class="label">เนื้อเรื่อง / Summary</label>
-            <textarea v-model="form.summary" class="input" rows="5" placeholder="สรุปเนื้อหา..." />
+
+          <!-- xp + level -->
+          <div class="grid grid-cols-3 gap-3">
+            <div><label class="label">XP Gained</label><input v-model="form.xp_gained" type="number" class="input" /></div>
+            <div><label class="label">XP Total</label><input v-model="form.xp_total" type="number" class="input" /></div>
+            <div><label class="label">Level After</label><input v-model="form.level_after" type="number" class="input" /></div>
           </div>
+
+          <!-- summary -->
+          <div>
+            <label class="label">Summary</label>
+            <textarea v-model="form.summary" class="input" rows="4" placeholder="สรุปเนื้อหา..." />
+          </div>
+
+          <!-- key events -->
+          <div>
+            <label class="label">Key Events <span class="text-slate-600 font-normal">(แต่ละบรรทัด = 1 event)</span></label>
+            <textarea v-model="form.key_events" class="input font-mono text-xs" rows="5"
+              placeholder="G ใช้ Grey Matter แฮค&#10;พบ Tetrax Shard&#10;..." />
+          </div>
+
+          <!-- missions completed -->
+          <div>
+            <label class="label">Missions Completed <span class="text-slate-600 font-normal">(แต่ละบรรทัด)</span></label>
+            <textarea v-model="form.missions_completed" class="input font-mono text-xs" rows="2"
+              placeholder="First Contact — Vilgax Robot&#10;Bounty Hunter" />
+          </div>
+
+          <!-- loot -->
+          <div>
+            <label class="label">Loot <span class="text-slate-600 font-normal">(แต่ละบรรทัด)</span></label>
+            <textarea v-model="form.loot" class="input font-mono text-xs" rows="3"
+              placeholder="Plasma Sniper Cannon&#10;Energy Shield Generator" />
+          </div>
+
+          <!-- player upgrades -->
           <div>
             <div class="label mb-2">Player Upgrades</div>
             <div v-for="[pid, p] in playerList" :key="pid" class="flex items-center gap-2 mb-1.5">
@@ -275,6 +329,8 @@ async function remove(id, num) {
                 placeholder="upgrade..." @input="setUpgrade(pid, $event.target.value)" />
             </div>
           </div>
+
+          <!-- character notes -->
           <div>
             <div class="label mb-2">Character Notes</div>
             <div v-for="[cid, c] in Object.entries(store.characters)" :key="cid" class="flex items-center gap-2 mb-1.5">
@@ -282,6 +338,13 @@ async function remove(id, num) {
               <input :value="form.character_notes[cid] || ''" class="input flex-1 text-sm py-1.5"
                 placeholder="note..." @input="setCharNote(cid, $event.target.value)" />
             </div>
+          </div>
+
+          <!-- best quotes -->
+          <div>
+            <label class="label">Best Quotes <span class="text-slate-600 font-normal">(แต่ละบรรทัด)</span></label>
+            <textarea v-model="form.best_quotes" class="input font-mono text-xs" rows="2"
+              placeholder='"ช่วยผมด้วยครับ!" — B' />
           </div>
         </div>
         <div class="flex justify-end gap-2 px-5 pb-5">
