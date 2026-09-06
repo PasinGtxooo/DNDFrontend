@@ -2,6 +2,7 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { store } from '../../store/index.js'
 import { useToast } from '../../composables/useToast.js'
+import TagInput from '../ui/TagInput.vue'
 
 const props = defineProps({ alienId: String, isMaster: { type: Boolean, default: false } })
 const emit  = defineEmits(['close'])
@@ -26,7 +27,7 @@ const rankStyle = {
 const f = reactive({
   name: '', hp: '', hp_max: '', ac: '', speed: '',
   STR: '', DEX: '', CON: '', INT: '', WIS: '', CHA: '',
-  abilities: '', weaknesses: '', items: '',
+  abilities: [], weaknesses: [], items: [],
 })
 
 watch(() => props.alienId, (id) => {
@@ -43,21 +44,21 @@ watch(() => props.alienId, (id) => {
   f.INT        = a.INT       ?? ''
   f.WIS        = a.WIS       ?? ''
   f.CHA        = a.CHA       ?? ''
-  f.abilities  = (a.abilities  || []).join(', ')
-  f.weaknesses = (a.weaknesses || []).join(', ')
-  f.items      = (a.items      || []).join(', ')
+  f.abilities  = [...(a.abilities  || [])]
+  f.weaknesses = [...(a.weaknesses || [])]
+  f.items      = [...(a.items      || [])]
 }, { immediate: true })
 
-const n   = (v) => v !== '' ? Number(v) : null
-const arr = (v) => v.split(',').map(s => s.trim()).filter(Boolean)
+const n = (v) => v !== '' ? Number(v) : null
 
 async function submit() {
+  if (!confirm(`Save changes to "${props.alienId}"?`)) return
   const body = {
     name: f.name || null,
     hp: n(f.hp), hp_max: n(f.hp_max), ac: n(f.ac), speed: n(f.speed),
     STR: n(f.STR), DEX: n(f.DEX), CON: n(f.CON),
     INT: n(f.INT), WIS: n(f.WIS), CHA: n(f.CHA),
-    abilities: arr(f.abilities), weaknesses: arr(f.weaknesses), items: arr(f.items),
+    abilities: f.abilities, weaknesses: f.weaknesses, items: f.items,
   }
   Object.keys(body).forEach(k => { if (body[k] === null) delete body[k] })
   try {
@@ -79,8 +80,7 @@ async function remove() {
 
 <template>
   <Teleport to="body">
-    <div class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-3"
-         @click.self="emit('close')">
+    <div class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-3">
 
       <div class="w-full max-w-xl max-h-[92vh] flex flex-col rounded-2xl overflow-hidden border border-[#2a3340]"
            style="background:#080b0e; box-shadow:0 0 60px rgba(0,230,118,0.1), 0 32px 80px rgba(0,0,0,0.8)">
@@ -148,16 +148,16 @@ async function remove() {
             <div><label class="label">WIS</label><input v-model="f.WIS" type="number" class="input" /></div>
             <div><label class="label">CHA</label><input v-model="f.CHA" type="number" class="input" /></div>
             <div class="col-span-3">
-              <label class="label">Abilities (comma separated)</label>
-              <input v-model="f.abilities" class="input" />
+              <label class="label">Abilities</label>
+              <TagInput v-model="f.abilities" placeholder="Type and press Enter or ," />
             </div>
             <div class="col-span-3">
-              <label class="label">Weaknesses (comma separated)</label>
-              <input v-model="f.weaknesses" class="input" />
+              <label class="label">Weaknesses</label>
+              <TagInput v-model="f.weaknesses" placeholder="Type and press Enter or ," />
             </div>
             <div class="col-span-3">
-              <label class="label">Items (comma separated)</label>
-              <input v-model="f.items" class="input" />
+              <label class="label">Items</label>
+              <TagInput v-model="f.items" placeholder="Type and press Enter or ," />
             </div>
           </div>
         </div>
